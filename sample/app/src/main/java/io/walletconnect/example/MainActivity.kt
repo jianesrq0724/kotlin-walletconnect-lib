@@ -47,7 +47,6 @@ class MainActivity : Activity(), Session.Callback {
                 screen_main_disconnect_button.visibility = View.VISIBLE
                 screen_main_tx_button.visibility = View.VISIBLE
 
-                ExampleApplication.session.
             }
         } else {
             Toast.makeText(
@@ -87,18 +86,12 @@ class MainActivity : Activity(), Session.Callback {
             ExampleApplication.session.kill()
         }
         screen_main_tx_button.setOnClickListener {
-//            toSendEth()
+            toSendEth()
 //            toSendToken()
 //            toSignMessage()
-            toGetBalance()
         }
     }
 
-
-    private fun toGetBalance() {
-
-
-    }
 
 
     private fun toSignMessage() {
@@ -110,7 +103,7 @@ class MainActivity : Activity(), Session.Callback {
         ExampleApplication.session.performMethodCall(
             Session.MethodCall.SignMessage(
                 txRequest,
-                "0x0298c2b32eae4da002a15f36fdf7615bea3da047",
+                "0x8d7804d45a4c73d3ffa213647a3107f9209d298a",
                 "test"
             ), ::handleResponse
         )

@@ -102,7 +102,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
                         "wc_sessionRequest" -> it.toSessionRequest()
                         "wc_sessionUpdate" -> it.toSessionUpdate()
                         "eth_sendTransaction" -> it.toSendTransaction()
-                        "eth_sign" -> it.toSignMessage()
+                        "personal_sign" -> it.toSignMessage()
                         null -> it.toResponse()
                         else -> it.toCustom()
                     }
@@ -195,7 +195,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
 
     private fun Session.MethodCall.SignMessage.toMap() =
         jsonRpc(
-            id, "eth_sign", address, message
+            id, "personal_sign", address, message
         )
 
     private fun Session.MethodCall.Response.toMap() =
