@@ -7,16 +7,21 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
+import io.reactivex.functions.Consumer
 import io.walletconnect.example.utils.Convert
 import io.walletconnect.example.utils.EthUtils
+import io.walletconnect.example.utils.EthUtils.mHecoMdexWeb3jBean
 import kotlinx.android.synthetic.main.screen_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.Address
 import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
-import java.util.*
+import java.math.BigDecimal
+import java.math.BigInteger
 
 
 class MainActivity : Activity(), Session.Callback {
@@ -86,7 +91,7 @@ class MainActivity : Activity(), Session.Callback {
             ExampleApplication.session.kill()
         }
         screen_main_tx_button.setOnClickListener {
-            toSendEth()
+            getNonceSendEth()
 //            toSendToken()
 //            toSignMessage()
         }
@@ -146,21 +151,33 @@ class MainActivity : Activity(), Session.Callback {
         CommUtils.openApp(this, metaMaskPackName)
     }
 
-
-    private fun toSendEth() {
+    private fun getNonceSendEth() {
 
         val from =
             ExampleApplication.session.approvedAccounts()?.first() ?: return
+
+        val subscribe = EthUtils.getNonceFlowable(mHecoMdexWeb3jBean, from)
+            .subscribe({ nonce ->
+                toSendEth(from, nonce)
+            }, Throwable::printStackTrace)
+
+    }
+
+
+    private fun toSendEth(fromAddress: String, nonce: BigInteger) {
+
         val txRequest = System.currentTimeMillis()
         ExampleApplication.session.performMethodCall(
             Session.MethodCall.SendTransaction(
                 txRequest,
-                from,
+                fromAddress,
                 "0x431900bF806508044D7218f635e5615baA462880",
-                EthUtils.getHexStr("4"),
+                EthUtils.getHexStr(nonce.toString()),
                 EthUtils.getHexStr(Convert.toWei("3", Convert.Unit.GWEI).toBigInteger().toString()),
                 EthUtils.getHexStr("21000"),
-                EthUtils.getHexStr(Convert.toWei("0.001", Convert.Unit.ETHER).toBigInteger().toString()),
+                EthUtils.getHexStr(
+                    Convert.toWei("0.001", Convert.Unit.ETHER).toBigInteger().toString()
+                ),
                 ""
             ), ::handleResponse
         )
