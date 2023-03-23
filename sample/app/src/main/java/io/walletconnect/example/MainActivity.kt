@@ -7,21 +7,26 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import io.reactivex.Observable
-import io.reactivex.Observer
-import io.reactivex.disposables.Disposable
-import io.reactivex.functions.Consumer
+import io.walletconnect.example.eth.Web3jBean
 import io.walletconnect.example.utils.Convert
 import io.walletconnect.example.utils.EthUtils
 import io.walletconnect.example.utils.EthUtils.mHecoMdexWeb3jBean
+import io.walletconnect.example.utils.LogUtils
 import kotlinx.android.synthetic.main.screen_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
+import org.web3j.abi.FunctionEncoder
+import org.web3j.abi.TypeReference
+import org.web3j.abi.datatypes.Address
+import org.web3j.abi.datatypes.Function
+import org.web3j.abi.datatypes.Type
+import org.web3j.abi.datatypes.generated.Uint256
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.*
 
 
 class MainActivity : Activity(), Session.Callback {
@@ -29,6 +34,8 @@ class MainActivity : Activity(), Session.Callback {
     private var txRequest: Long? = null
     private var metaMaskPackName: String? = null
     private val uiScope = CoroutineScope(Dispatchers.Main)
+
+    private val mWeb3jBean: Web3jBean = mHecoMdexWeb3jBean
 
     override fun onStatus(status: Session.Status) {
         when (status) {
@@ -52,6 +59,8 @@ class MainActivity : Activity(), Session.Callback {
                 screen_main_connect_button.visibility = View.GONE
                 screen_main_disconnect_button.visibility = View.VISIBLE
                 screen_main_tx_button.visibility = View.VISIBLE
+
+                EthUtils.getGasPrice(mWeb3jBean)
             }
         } else {
             Toast.makeText(
@@ -73,8 +82,8 @@ class MainActivity : Activity(), Session.Callback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.screen_main)
-
         metaMaskPackName = CommUtils.getAppInfo(this)
+
     }
 
     override fun onStart() {
@@ -92,7 +101,7 @@ class MainActivity : Activity(), Session.Callback {
         }
         screen_main_tx_button.setOnClickListener {
             getNonceSendEth()
-//            toSendToken()
+//            getNonceSendToken()
 //            toSignMessage()
         }
     }
@@ -119,29 +128,50 @@ class MainActivity : Activity(), Session.Callback {
     }
 
 
-    private fun toSendToken() {
+    private fun getNonceSendToken() {
+
         val from =
             ExampleApplication.session.approvedAccounts()?.first() ?: return
 
-//        val function = Function(
-//            "transfer",
-//            Arrays.asList(Address(toAddress), Uint256(value)),
-//            listOf(object : TypeReference<Type?>() {})
-//        )
+        val subscribe = EthUtils.getNonceFlowable(mWeb3jBean, from)
+            .subscribe({ nonce ->
+                toSendToken(from, nonce.toString())
+            }, Throwable::printStackTrace)
 
-        val encodedFunction =
-            "0xa9059cbb00000000000000000000000054f8fb804f1c0d3f8d3787ebd48141114cb9550000000000000000000000000000000000000000000000000000000000000f4240"
+    }
+
+
+    private fun toSendToken(fromAddress: String, nonce: String) {
+
+        val number = BigDecimal.valueOf(0.001)
+        val toAddress = "0x54f8Fb804f1C0D3f8D3787EBd48141114Cb95500"
+        val erc20DecimalPoint = 8
+        val value: BigInteger =
+            number.multiply(BigDecimal.TEN.pow(erc20DecimalPoint)).toBigInteger()
+
+        val function = Function(
+            "transfer",
+            listOf<Type<*>>(Address(toAddress), Uint256(value)),
+            listOf<TypeReference<*>>(object : TypeReference<Type<*>?>() {})
+        )
+
+        val encodedFunction = FunctionEncoder.encode(function)
+        LogUtils.e("encodedFunction:  $encodedFunction")
+
+        val hexNonce = EthUtils.getHexStr(nonce)
+        val hexGWei = EthUtils.getHexGWei(mWeb3jBean.platform)
+        var hexGasLimit = EthUtils.getHexStr("70000")
 
         val txRequest = System.currentTimeMillis()
         ExampleApplication.session.performMethodCall(
             Session.MethodCall.SendTransaction(
                 txRequest,
-                from,
+                fromAddress,
                 "0x0298c2b32eae4da002a15f36fdf7615bea3da047",
-                EthUtils.getHexStr("3"),
-                EthUtils.getHexStr(Convert.toWei("3", Convert.Unit.GWEI).toBigInteger().toString()),
-                EthUtils.getHexStr("70000"),
-                EthUtils.getHexStr("0"),
+                hexNonce,
+                hexGWei,
+                hexGasLimit,
+                "0",
                 encodedFunction
             ), ::handleResponse
         )
@@ -156,7 +186,7 @@ class MainActivity : Activity(), Session.Callback {
         val from =
             ExampleApplication.session.approvedAccounts()?.first() ?: return
 
-        val subscribe = EthUtils.getNonceFlowable(mHecoMdexWeb3jBean, from)
+        val subscribe = EthUtils.getNonceFlowable(mWeb3jBean, from)
             .subscribe({ nonce ->
                 toSendEth(from, nonce)
             }, Throwable::printStackTrace)
@@ -166,18 +196,22 @@ class MainActivity : Activity(), Session.Callback {
 
     private fun toSendEth(fromAddress: String, nonce: BigInteger) {
 
+        val hexNonce = EthUtils.getHexStr(nonce)
+        val hexGWei = EthUtils.getHexGWei(mWeb3jBean.platform)
+        val hexGasLimit = EthUtils.getHexStr("21000")
+        val hexValue =
+            EthUtils.getHexStr(Convert.toWei("0.001", Convert.Unit.ETHER).toBigInteger().toString())
+
         val txRequest = System.currentTimeMillis()
         ExampleApplication.session.performMethodCall(
             Session.MethodCall.SendTransaction(
                 txRequest,
                 fromAddress,
                 "0x431900bF806508044D7218f635e5615baA462880",
-                EthUtils.getHexStr(nonce.toString()),
-                EthUtils.getHexStr(Convert.toWei("3", Convert.Unit.GWEI).toBigInteger().toString()),
-                EthUtils.getHexStr("21000"),
-                EthUtils.getHexStr(
-                    Convert.toWei("0.001", Convert.Unit.ETHER).toBigInteger().toString()
-                ),
+                hexNonce,
+                hexGWei,
+                hexGasLimit,
+                hexValue,
                 ""
             ), ::handleResponse
         )

@@ -6,13 +6,17 @@ import android.util.Log;
 import org.reactivestreams.Publisher;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.utils.Convert;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.concurrent.ExecutionException;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.walletconnect.example.database.DataLitePal;
 import io.walletconnect.example.eth.Web3jBean;
 
 public class EthUtils {
@@ -25,7 +29,11 @@ public class EthUtils {
 
     public static String getHexStr(String value) {
         BigInteger valueBigInteger = new BigInteger(value);
-        String hexValue = Numeric.toHexStringNoPrefix(valueBigInteger);
+        return getHexStr(valueBigInteger);
+    }
+
+    public static String getHexStr(BigInteger value) {
+        String hexValue = Numeric.toHexStringNoPrefix(value);
         return "0x" + hexValue;
     }
 
@@ -55,5 +63,36 @@ public class EthUtils {
         return flowable;
     }
 
+    public static void getGasPrice(Web3jBean web3jBean) {
+        long lastTime = System.currentTimeMillis();
+        Disposable subscribe = web3jBean.web3j.ethGasPrice()
+                .flowable()
+                .compose(RxUtils.rxSchedulerNewThread())
+                .subscribe(ethGasPrice -> {
+
+                    BigInteger gasPriceWei = ethGasPrice.getGasPrice();
+                    BigDecimal gasPrice = Convert.fromWei(gasPriceWei.toString(), Convert.Unit.GWEI);
+                    LogUtils.e(web3jBean.platform + " gasPrice: " + gasPrice + " , rpcUrl: " + web3jBean.rpcUrl);
+
+                    DataLitePal.getInstance().setMinGasPrice(web3jBean.platform, gasPrice);
+                }, Throwable::printStackTrace);
+
+    }
+
+
+    public static BigDecimal gasPriceDecimalPoint(String platform, BigDecimal gasPrice) {
+        int scale = 1;
+        return numberDecimalPoint(gasPrice, scale);
+    }
+
+    public static BigDecimal numberDecimalPoint(BigDecimal num, int scale) {
+        return num.setScale(scale, RoundingMode.HALF_UP);
+    }
+
+    public static String getHexGWei(String platform) {
+        BigDecimal minGasPrice = DataLitePal.getInstance().getMinGasPrice(platform);
+        String hexGWei = getHexStr(Convert.toWei(minGasPrice.toString(), Convert.Unit.GWEI).toBigInteger().toString());
+        return hexGWei;
+    }
 
 }
