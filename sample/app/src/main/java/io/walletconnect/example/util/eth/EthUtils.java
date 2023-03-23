@@ -174,14 +174,12 @@ public class EthUtils {
 
     public static Flowable<BigDecimal> getAmountAFlowable(Web3jBean web3jBean, String tokenAddress) {
 
-
         String methodName = "_amountA";
 
         List<org.web3j.abi.datatypes.Type> inputParameters = new ArrayList<>();
         List<TypeReference<?>> outputParameters = new ArrayList<>();
 
-        TypeReference<Uint256> typeReference = new TypeReference<Uint256>() {
-        };
+        TypeReference<Uint256> typeReference = new TypeReference<Uint256>() {};
         outputParameters.add(typeReference);
 
         Function function = new Function(methodName, inputParameters, outputParameters);

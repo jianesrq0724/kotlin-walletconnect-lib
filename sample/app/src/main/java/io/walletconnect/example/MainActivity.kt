@@ -393,10 +393,10 @@ class MainActivity : Activity(), Session.Callback {
     private fun getAmountA() {
         val tokenAddress = mWeb3jBean.mdexAddress
         var subscribe = EthUtils.getAmountAFlowable(mWeb3jBean, tokenAddress)
-            .subscribe({ tokenName ->
+            .subscribe({ amountA ->
                 run {
-                    LogUtils.e("$tokenAddress,tokenName:  $tokenName")
-                    tv_amountA_result.text = tokenName.toString()
+                    LogUtils.e("$tokenAddress,amountA:  $amountA")
+                    tv_amountA_result.text = amountA.toString()
                 }
             }, Throwable::printStackTrace)
     }
@@ -404,10 +404,10 @@ class MainActivity : Activity(), Session.Callback {
     private fun getAmountB() {
         val tokenAddress = mWeb3jBean.mdexAddress
         var subscribe = EthUtils.getAmountBFlowable(mWeb3jBean, tokenAddress)
-            .subscribe({ tokenName ->
+            .subscribe({ amountB ->
                 run {
-                    LogUtils.e("$tokenAddress,tokenName:  $tokenName")
-                    tv_amountB_result.text = tokenName.toString()
+                    LogUtils.e("$tokenAddress,tokenName:  $amountB")
+                    tv_amountB_result.text = amountB.toString()
                 }
             }, Throwable::printStackTrace)
     }
@@ -415,10 +415,10 @@ class MainActivity : Activity(), Session.Callback {
     private fun getFlag() {
         val tokenAddress = mWeb3jBean.mdexAddress
         var subscribe = EthUtils.getFlagFlowable(mWeb3jBean, tokenAddress)
-            .subscribe({ tokenName ->
+            .subscribe({ flag ->
                 run {
-                    LogUtils.e("$tokenAddress,tokenName:  $tokenName")
-                    tv_flag_result.text = tokenName
+                    LogUtils.e("$tokenAddress,tokenName:  $flag")
+                    tv_flag_result.text = flag
                 }
             }, Throwable::printStackTrace)
     }
