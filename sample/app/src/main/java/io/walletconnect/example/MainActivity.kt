@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import io.walletconnect.example.utils.Convert
+import io.walletconnect.example.utils.EthUtils
 import kotlinx.android.synthetic.main.screen_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +47,6 @@ class MainActivity : Activity(), Session.Callback {
                 screen_main_connect_button.visibility = View.GONE
                 screen_main_disconnect_button.visibility = View.VISIBLE
                 screen_main_tx_button.visibility = View.VISIBLE
-
             }
         } else {
             Toast.makeText(
@@ -93,7 +93,6 @@ class MainActivity : Activity(), Session.Callback {
     }
 
 
-
     private fun toSignMessage() {
 
         val encodedFunction =
@@ -134,10 +133,10 @@ class MainActivity : Activity(), Session.Callback {
                 txRequest,
                 from,
                 "0x0298c2b32eae4da002a15f36fdf7615bea3da047",
-                "12064",
-                Convert.toWei("3", Convert.Unit.GWEI).toBigInteger().toString(),
-                "70000",
-                "0",
+                EthUtils.getHexStr("3"),
+                EthUtils.getHexStr(Convert.toWei("3", Convert.Unit.GWEI).toBigInteger().toString()),
+                EthUtils.getHexStr("70000"),
+                EthUtils.getHexStr("0"),
                 encodedFunction
             ), ::handleResponse
         )
@@ -149,6 +148,7 @@ class MainActivity : Activity(), Session.Callback {
 
 
     private fun toSendEth() {
+
         val from =
             ExampleApplication.session.approvedAccounts()?.first() ?: return
         val txRequest = System.currentTimeMillis()
@@ -157,10 +157,10 @@ class MainActivity : Activity(), Session.Callback {
                 txRequest,
                 from,
                 "0x431900bF806508044D7218f635e5615baA462880",
-                "2",
-                Convert.toWei("3", Convert.Unit.GWEI).toBigInteger().toString(),
-                "21000",
-                Convert.toWei("0.001", Convert.Unit.ETHER).toBigInteger().toString(),
+                EthUtils.getHexStr("4"),
+                EthUtils.getHexStr(Convert.toWei("3", Convert.Unit.GWEI).toBigInteger().toString()),
+                EthUtils.getHexStr("21000"),
+                EthUtils.getHexStr(Convert.toWei("0.001", Convert.Unit.ETHER).toBigInteger().toString()),
                 ""
             ), ::handleResponse
         )
