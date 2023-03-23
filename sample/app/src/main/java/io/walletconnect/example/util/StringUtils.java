@@ -1,10 +1,6 @@
-package io.walletconnect.example.utils;
+package io.walletconnect.example.util;
 
-/**
- * @author Carl
- * version 1.0
- * @since 2018/7/6
- */
+
 public class StringUtils {
 
     public static boolean isEmpty(String str) {

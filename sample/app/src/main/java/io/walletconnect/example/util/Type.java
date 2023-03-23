@@ -1,4 +1,4 @@
-package io.walletconnect.example.utils;
+package io.walletconnect.example.util;
 
 public interface Type<T> {
     int MAX_BIT_LENGTH = 256;

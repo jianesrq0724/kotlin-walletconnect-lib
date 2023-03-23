@@ -1,4 +1,4 @@
-package io.walletconnect.example.eth;
+package io.walletconnect.example.util.eth;
 
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;

@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.walletconnect.example.utils.EthUtils;
-import io.walletconnect.example.utils.MapUtils;
-import io.walletconnect.example.utils.StringUtils;
+import io.walletconnect.example.util.eth.EthUtils;
+import io.walletconnect.example.util.MapUtils;
+import io.walletconnect.example.util.StringUtils;
 
 public class DataLitePal {
 

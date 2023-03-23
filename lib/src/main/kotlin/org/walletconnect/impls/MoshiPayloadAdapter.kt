@@ -102,7 +102,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
                         "wc_sessionRequest" -> it.toSessionRequest()
                         "wc_sessionUpdate" -> it.toSessionUpdate()
                         "eth_sendTransaction" -> it.toSendTransaction()
-                        "personal_sign" -> it.toSignMessage()
+                        "eth_sign" -> it.toSignMessage()
                         null -> it.toResponse()
                         else -> it.toCustom()
                     }

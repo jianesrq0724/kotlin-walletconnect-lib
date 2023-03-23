@@ -1,4 +1,4 @@
-package io.walletconnect.example.utils;
+package io.walletconnect.example.util;
 
 import android.util.Log;
 

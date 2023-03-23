@@ -18,6 +18,8 @@ interface Session {
     fun peerMeta(): PeerMeta?
     fun approvedAccounts(): List<String>?
 
+    fun approvedChainId(): Long?
+
     fun approveRequest(id: Long, response: Any)
     fun rejectRequest(id: Long, errorCode: Long, errorMsg: String)
     fun performMethodCall(call: MethodCall, callback: ((MethodCall.Response) -> Unit)? = null)
@@ -78,6 +80,7 @@ interface Session {
     sealed class Status {
         object Connected : Status()
         object Disconnected : Status()
+        object AuthFailed : Status()
         object Approved : Status()
         object Closed : Status()
         data class Error(val throwable: Throwable) : Status()

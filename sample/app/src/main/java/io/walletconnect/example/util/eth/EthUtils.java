@@ -1,4 +1,4 @@
-package io.walletconnect.example.utils;
+package io.walletconnect.example.util.eth;
 
 
 import android.text.TextUtils;
@@ -8,13 +8,11 @@ import org.reactivestreams.Publisher;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
-import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.abi.datatypes.generated.Uint256;
-import org.web3j.abi.datatypes.generated.Uint8;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
@@ -25,15 +23,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.walletconnect.example.database.DataLitePal;
-import io.walletconnect.example.eth.FunctionEncoderUtils;
-import io.walletconnect.example.eth.Web3jBean;
+import io.walletconnect.example.util.LogUtils;
+import io.walletconnect.example.util.Numeric;
+import io.walletconnect.example.util.RxUtils;
+import io.walletconnect.example.util.StringUtils;
 
 public class EthUtils {
 
@@ -138,18 +137,13 @@ public class EthUtils {
     }
 
     public static Flowable<String> getTokenNameFlowable(Web3jBean web3jBean, String tokenAddress) {
-        String tokenSymbol = DataLitePal.getInstance().getTokenSymbol(tokenAddress);
-        if (!TextUtils.isEmpty(tokenSymbol)) {
-            return Flowable.just(tokenSymbol);
-        }
 
-        String methodName = "_amountA";
+        String methodName = "name";
 
         List<org.web3j.abi.datatypes.Type> inputParameters = new ArrayList<>();
         List<TypeReference<?>> outputParameters = new ArrayList<>();
 
-//        TypeReference<Bool> typeReference = new TypeReference<Bool>() {
-        TypeReference<Uint256> typeReference = new TypeReference<Uint256>() {
+        TypeReference<Utf8String> typeReference = new TypeReference<Utf8String>() {
         };
         outputParameters.add(typeReference);
 
@@ -171,7 +165,118 @@ public class EthUtils {
                         symbol = results.get(0).getValue().toString();
                     }
 
-                    DataLitePal.getInstance().setTokenSymbol(tokenAddress, symbol);
+                    return Flowable.just(symbol);
+                })
+                .doOnError(Throwable::printStackTrace);
+        return flowable;
+    }
+
+
+    public static Flowable<BigDecimal> getAmountAFlowable(Web3jBean web3jBean, String tokenAddress) {
+
+
+        String methodName = "_amountA";
+
+        List<org.web3j.abi.datatypes.Type> inputParameters = new ArrayList<>();
+        List<TypeReference<?>> outputParameters = new ArrayList<>();
+
+        TypeReference<Uint256> typeReference = new TypeReference<Uint256>() {
+        };
+        outputParameters.add(typeReference);
+
+        Function function = new Function(methodName, inputParameters, outputParameters);
+
+        String data = FunctionEncoder.encode(function);
+        Transaction transaction = Transaction.createEthCallTransaction("0x0000000000000000000000000000000000000000", tokenAddress, data);
+
+        Flowable<BigDecimal> flowable = web3jBean.web3j.ethCall(transaction, DefaultBlockParameterName.LATEST)
+                .flowable()
+                .compose(RxUtils.rxSchedulerNewThread())
+                .flatMap((io.reactivex.functions.Function<EthCall, Publisher<BigDecimal>>) ethCall -> {
+
+                    BigDecimal balance = BigDecimal.ZERO;
+                    if (ethCall == null || ethCall.getValue() == null || ethCall.getValue().isEmpty()) {
+                        return Flowable.just(balance);
+                    }
+                    balance = erc20HexBalanceDecimalPointToDouble(ethCall.getValue(), 18);
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(web3jBean.platform).append(", balance:").append(balance).append(" ").append(", tokenAddress:").append(tokenAddress);
+                    LogUtils.i(sb.toString());
+
+                    return Flowable.just(balance);
+                })
+                .doOnError(Throwable::printStackTrace);
+
+        return flowable;
+    }
+
+    public static Flowable<BigDecimal> getAmountBFlowable(Web3jBean web3jBean, String tokenAddress) {
+
+        String methodName = "_amountB";
+
+        List<org.web3j.abi.datatypes.Type> inputParameters = new ArrayList<>();
+        List<TypeReference<?>> outputParameters = new ArrayList<>();
+
+        TypeReference<Uint256> typeReference = new TypeReference<Uint256>() {
+        };
+        outputParameters.add(typeReference);
+
+        Function function = new Function(methodName, inputParameters, outputParameters);
+
+        String data = FunctionEncoder.encode(function);
+        Transaction transaction = Transaction.createEthCallTransaction("0x0000000000000000000000000000000000000000", tokenAddress, data);
+
+
+        Flowable<BigDecimal> flowable = web3jBean.web3j.ethCall(transaction, DefaultBlockParameterName.LATEST)
+                .flowable()
+                .compose(RxUtils.rxSchedulerNewThread())
+                .flatMap((io.reactivex.functions.Function<EthCall, Publisher<BigDecimal>>) ethCall -> {
+
+                    BigDecimal balance = BigDecimal.ZERO;
+                    if (ethCall == null || ethCall.getValue() == null || ethCall.getValue().isEmpty()) {
+                        return Flowable.just(balance);
+                    }
+                    balance = erc20HexBalanceDecimalPointToDouble(ethCall.getValue(), 18);
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(web3jBean.platform).append(", balance:").append(balance).append(" ").append(", tokenAddress:").append(tokenAddress);
+                    LogUtils.i(sb.toString());
+
+                    return Flowable.just(balance);
+                })
+                .doOnError(Throwable::printStackTrace);
+        return flowable;
+    }
+
+    public static Flowable<String> getFlagFlowable(Web3jBean web3jBean, String tokenAddress) {
+
+        String methodName = "flag";
+
+        List<org.web3j.abi.datatypes.Type> inputParameters = new ArrayList<>();
+        List<TypeReference<?>> outputParameters = new ArrayList<>();
+
+        TypeReference<Bool> typeReference = new TypeReference<Bool>() {
+        };
+        outputParameters.add(typeReference);
+
+        Function function = new Function(methodName, inputParameters, outputParameters);
+
+        String data = FunctionEncoder.encode(function);
+        Transaction transaction = Transaction.createEthCallTransaction("0x0000000000000000000000000000000000000000", tokenAddress, data);
+
+        Flowable<String> flowable = web3jBean.web3j.ethCall(transaction, DefaultBlockParameterName.LATEST)
+                .flowable()
+                .compose(RxUtils.rxSchedulerNewThread())
+                .flatMap((io.reactivex.functions.Function<EthCall, Publisher<String>>) ethCall -> {
+                    String symbol = "";
+                    if (ethCall == null || ethCall.getValue() == null || ethCall.getValue().isEmpty()) {
+                        return Flowable.just(symbol);
+                    }
+                    List<Type> results = FunctionReturnDecoder.decode(ethCall.getValue(), function.getOutputParameters());
+                    if (null != results && results.size() > 0) {
+                        symbol = results.get(0).getValue().toString();
+                    }
 
                     return Flowable.just(symbol);
                 })
@@ -294,7 +399,7 @@ public class EthUtils {
     }
 
     public static String hexToDecStr(String hexValue) {
-        if (hexValue.isEmpty() || hexValue.equals("0x")) {
+        if (hexValue == null || hexValue.isEmpty() || hexValue.equals("0x")) {
             return BigInteger.ZERO.toString();
         }
 
