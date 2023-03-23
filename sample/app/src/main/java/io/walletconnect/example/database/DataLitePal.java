@@ -6,10 +6,14 @@ import java.util.Map;
 
 import io.walletconnect.example.utils.EthUtils;
 import io.walletconnect.example.utils.MapUtils;
+import io.walletconnect.example.utils.StringUtils;
 
 public class DataLitePal {
 
     public Map<String, BigDecimal> mMinGasPriceHashMap = new HashMap<>();
+    public Map<String, String> symbolHashMap = new HashMap<>();
+
+    public Map<String, Integer> decimalsHashMap = new HashMap<>();
 
     private static DataLitePal instance = new DataLitePal();
 
@@ -33,4 +37,55 @@ public class DataLitePal {
         return EthUtils.gasPriceDecimalPoint(platform, minGasPrice);
 
     }
+
+    public void setTokenSymbol(String tokenAddress, String symbol) {
+        if (StringUtils.isEmpty(tokenAddress) || StringUtils.isEmpty(symbol)) {
+            return;
+        }
+
+        String localTokenSymbol = getTokenSymbol(tokenAddress);
+        if (localTokenSymbol.equals(symbol)) {
+            return;
+        }
+
+        // 设置本地的值
+        String key = tokenAddress;
+        symbolHashMap.put(key, symbol);
+
+    }
+
+
+    public String getTokenSymbol(String tokenAddress) {
+        long lastTime = System.currentTimeMillis();
+
+        if (StringUtils.isEmpty(tokenAddress)) {
+            return "";
+        }
+
+        String mapValueString = MapUtils.getMapValueString(symbolHashMap, tokenAddress);
+
+        return mapValueString;
+    }
+
+    public void setTokenDecimals(String tokenAddress, int decimals) {
+        if (StringUtils.isEmpty(tokenAddress)) {
+            return;
+        }
+
+        int localTokenDecimals = getTokenDecimals(tokenAddress);
+        if (localTokenDecimals == decimals) {
+            return;
+        }
+
+        // 设置本地的值
+        String key = tokenAddress;
+        decimalsHashMap.put(key, decimals);
+
+    }
+
+    public int getTokenDecimals(String tokenAddress) {
+        int mapValueInt = MapUtils.getMapValueInt(decimalsHashMap, tokenAddress, -1);
+        return mapValueInt;
+    }
+
 }
