@@ -31,7 +31,8 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
     private fun createRandomBytes(i: Int) = ByteArray(i).also { SecureRandom().nextBytes(it) }
 
     override fun parse(payload: String, key: String): Session.MethodCall {
-        val encryptedPayload = payloadAdapter.fromJson(payload) ?: throw IllegalArgumentException("Invalid json payload!")
+        val encryptedPayload = payloadAdapter.fromJson(payload)
+            ?: throw IllegalArgumentException("Invalid json payload!")
 
         // TODO verify hmac
 
@@ -102,19 +103,23 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
                         "wc_sessionRequest" -> it.toSessionRequest()
                         "wc_sessionUpdate" -> it.toSessionUpdate()
                         "eth_sendTransaction" -> it.toSendTransaction()
-                        "eth_sign" -> it.toSignMessage()
+                        "personal_sign" -> it.toSignMessage()
                         null -> it.toResponse()
                         else -> it.toCustom()
                     }
                 } catch (e: Exception) {
-                    throw Session.MethodCallException.InvalidRequest(it.getId(), "$json (${e.message ?: "Unknown error"})")
+                    throw Session.MethodCallException.InvalidRequest(
+                        it.getId(),
+                        "$json (${e.message ?: "Unknown error"})"
+                    )
                 }
             } ?: throw IllegalArgumentException("Invalid json")
         }
 
     private fun Map<String, *>.toSessionUpdate(): Session.MethodCall.SessionUpdate {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
-        val data = params.firstOrNull() as? Map<String, *> ?: throw IllegalArgumentException("Invalid params")
+        val data = params.firstOrNull() as? Map<String, *>
+            ?: throw IllegalArgumentException("Invalid params")
         return Session.MethodCall.SessionUpdate(
             getId(),
             data.extractSessionParams()
@@ -123,7 +128,8 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
 
     private fun Map<String, *>.toSendTransaction(): Session.MethodCall.SendTransaction {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
-        val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
+        val data =
+            params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
         val from = data["from"] as? String ?: throw IllegalArgumentException("from key missing")
         val to = data["to"] as? String ?: throw IllegalArgumentException("to key missing")
         val nonce = data["nonce"] as? String ?: (data["nonce"] as? Double)?.toLong()?.toString()
@@ -132,13 +138,24 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         val gasLimit = data["gas"] as? String ?: data["gasLimit"] as? String
         val value = data["value"] as? String ?: "0x0"
         val txData = data["data"] as? String ?: throw IllegalArgumentException("data key missing")
-        return Session.MethodCall.SendTransaction(getId(), from, to, nonce, gasPrice, gasLimit, value, txData)
+        return Session.MethodCall.SendTransaction(
+            getId(),
+            from,
+            to,
+            nonce,
+            gasPrice,
+            gasLimit,
+            value,
+            txData
+        )
     }
 
     private fun Map<String, *>.toSignMessage(): Session.MethodCall.SignMessage {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
-        val address = params.getOrNull(0) as? String ?: throw IllegalArgumentException("Missing address")
-        val message = params.getOrNull(1) as? String ?: throw IllegalArgumentException("Missing message")
+        val address =
+            params.getOrNull(0) as? String ?: throw IllegalArgumentException("Missing address")
+        val message =
+            params.getOrNull(1) as? String ?: throw IllegalArgumentException("Missing message")
         return Session.MethodCall.SignMessage(getId(), address, message)
     }
 
