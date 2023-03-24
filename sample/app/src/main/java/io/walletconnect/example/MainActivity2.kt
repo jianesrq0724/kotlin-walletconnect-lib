@@ -8,11 +8,10 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import io.walletconnect.example.util.eth.FunctionEncoderUtils
-import io.walletconnect.example.util.eth.Web3jBean
+import io.walletconnect.example.bean.Web3jBean
 import io.walletconnect.example.util.eth.EthUtils
 import io.walletconnect.example.util.eth.EthUtils.mHecoWeb3jBean
 import io.walletconnect.example.util.LogUtils
-import kotlinx.android.synthetic.main.screen_main.*
 import kotlinx.android.synthetic.main.screen_main.screen_main_connect_button
 import kotlinx.android.synthetic.main.screen_main.screen_main_disconnect_button
 import kotlinx.android.synthetic.main.screen_main.screen_main_status

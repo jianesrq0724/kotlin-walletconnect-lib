@@ -3,7 +3,6 @@ package io.walletconnect.example.util.eth;
 
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.reactivestreams.Publisher;
 import org.web3j.abi.FunctionEncoder;
@@ -29,6 +28,7 @@ import java.util.List;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.walletconnect.example.bean.Web3jBean;
 import io.walletconnect.example.database.DataLitePal;
 import io.walletconnect.example.util.LogUtils;
 import io.walletconnect.example.util.Numeric;
@@ -94,16 +94,32 @@ public class EthUtils {
         return flowable;
     }
 
+    public static Flowable<BigInteger> getPendingNonceFlowable(Web3jBean web3jBean, String fromAddress) {
+        Flowable<BigInteger> flowable = web3jBean.web3j.ethGetTransactionCount(fromAddress, DefaultBlockParameterName.LATEST)
+                .flowable()
+                .compose(RxUtils.rxSchedulerNewThread())
+                .flatMap((io.reactivex.functions.Function<EthGetTransactionCount, Publisher<BigInteger>>) ethGetTransactionCount -> {
+                    BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+
+                    Log.i("TAG", fromAddress + " , nonce: " + nonce);
+                    return Flowable.just(nonce);
+                })
+                .doOnError(throwable -> {
+                    throwable.printStackTrace();
+
+                });
+        return flowable;
+    }
+
     public static void getGasPrice(Web3jBean web3jBean) {
         long lastTime = System.currentTimeMillis();
         Disposable subscribe = web3jBean.web3j.ethGasPrice()
                 .flowable()
                 .compose(RxUtils.rxSchedulerNewThread())
                 .subscribe(ethGasPrice -> {
-
                     BigInteger gasPriceWei = ethGasPrice.getGasPrice();
                     BigDecimal gasPrice = Convert.fromWei(gasPriceWei.toString(), Convert.Unit.GWEI);
-                    LogUtils.e(web3jBean.platform + " gasPrice: " + gasPrice + " , rpcUrl: " + web3jBean.rpcUrl);
+                    LogUtils.e(web3jBean.platform + " gasPrice: " + gasPrice + ", " + ethGasPrice.getResult() + " , rpcUrl: " + web3jBean.rpcUrl);
 
                     DataLitePal.getInstance().setMinGasPrice(web3jBean.platform, gasPrice);
                 }, Throwable::printStackTrace);
@@ -183,7 +199,8 @@ public class EthUtils {
         List<org.web3j.abi.datatypes.Type> inputParameters = new ArrayList<>();
         List<TypeReference<?>> outputParameters = new ArrayList<>();
 
-        TypeReference<Uint256> typeReference = new TypeReference<Uint256>() {};
+        TypeReference<Uint256> typeReference = new TypeReference<Uint256>() {
+        };
         outputParameters.add(typeReference);
 
         Function function = new Function(methodName, inputParameters, outputParameters);

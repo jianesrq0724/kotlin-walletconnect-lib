@@ -54,7 +54,7 @@ class ExampleApplication : MultiDexApplication() {
         fun resetSession() {
             nullOnThrow { session }?.clearCallbacks()
 //            val key = ByteArray(32).also { Random().nextBytes(it) }.toNoPrefixHexString()
-            config = Session.Config("ffd70e47-8634-4eba-95e9-81d7d1ee3bc3", "https://bridge.walletconnect.org", "10d842ec755f67ed37de894811d2b641e1e752f3a91cec05d64ed4b7735cb8c3")
+            config = Session.Config("ffd70e47-8634-4eba-95e9-81d7d1ee3bc3", "https://bridge.walletconnect.org", "10d842ec755f67ed37de894811d2b641e1e752f3a91cec05d64ed4b7735cb8c8")
 //                Session.Config(UUID.randomUUID().toString(), "https://bridge.walletconnect.org", key)
             session = WCSession(config.toFullyQualifiedConfig(),
                     MoshiPayloadAdapter(moshi),
@@ -67,7 +67,7 @@ class ExampleApplication : MultiDexApplication() {
 
         fun reConnect(context: Context){
             val uri =
-                "wc:ffd70e47-8634-4eba-95e9-81d7d1ee3bc3@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=10d842ec755f67ed37de894811d2b641e1e752f3a91cec05d64ed4b7735cb8c3"
+                "wc:ffd70e47-8634-4eba-95e9-81d7d1ee3bc3@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=10d842ec755f67ed37de894811d2b641e1e752f3a91cec05d64ed4b7735cb8c9"
             config = Session.Config.fromWCUri(uri)
             session = WCSession(config.toFullyQualifiedConfig(),
                 MoshiPayloadAdapter(moshi),

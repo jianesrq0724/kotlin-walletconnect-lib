@@ -1,22 +1,23 @@
 package io.walletconnect.example
 
 import android.app.Activity
-import android.os.Bundle
-import kotlinx.android.synthetic.main.screen_main.*
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
-import android.view.View
 import android.widget.Toast
 import io.walletconnect.example.util.LogUtils
 import io.walletconnect.example.util.SPUtils
 import io.walletconnect.example.util.eth.EthUtils
 import io.walletconnect.example.util.eth.FunctionEncoderUtils
-import io.walletconnect.example.util.eth.Web3jBean
+import io.walletconnect.example.bean.Web3jBean
+import io.walletconnect.example.util.eth.RpcMethodUtils
+import kotlinx.android.synthetic.main.screen_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.komputing.khex.extensions.toHexString
 import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
 
@@ -28,8 +29,8 @@ class MainActivity : Activity(), Session.Callback {
     private val uiScope = CoroutineScope(Dispatchers.Main)
 
 
-    private val mWeb3jBean: Web3jBean = EthUtils.mDiGiFTTestWeb3jBean
-//    private val mWeb3jBean: Web3jBean = EthUtils.mHecoWeb3jBean
+    //    private val mWeb3jBean: Web3jBean = EthUtils.mDiGiFTTestWeb3jBean
+    private val mWeb3jBean: Web3jBean = EthUtils.mHecoWeb3jBean
 
     override fun onStatus(status: Session.Status) {
         when (status) {
@@ -56,6 +57,8 @@ class MainActivity : Activity(), Session.Callback {
     }
 
     private fun sessionApproved() {
+
+
         Log.e("status", "sessionApproved")
         if (ExampleApplication.storage.list().isNotEmpty()) {
             Log.e(
@@ -145,25 +148,11 @@ class MainActivity : Activity(), Session.Callback {
 
 
         btn_auth_sign.setOnClickListener {
-            if (ExampleApplication.session != null) {
-                val txRequest = ConstantAction.singAction
-                ExampleApplication.session.performMethodCall(
-                    Session.MethodCall.SignMessage(
-                        1,
-                        "0xc2a5306d3D9a0b22D9Ff0260d3ca68f4179C3fd8",
-                        "4920616d206d652c206120646966666572656e7420636f6c6f722066697265776f726b7321"
-                    ),
-                    ::handleResponse
-                )
-                this.txRequest = txRequest
-
-                //主动跳转至MetaMask
-                CommUtils.openApp(this, metaMaskPackName)
-            } else {
-                Toast.makeText(this, "请先建立连接", Toast.LENGTH_SHORT).show()
-            }
+            toSigin()
+            // TODO: 调试
+//            getNonceFromWC()
+//            toTest2()
         }
-
 
         btn_name_query.setOnClickListener {
             getTokenName()
@@ -183,8 +172,7 @@ class MainActivity : Activity(), Session.Callback {
         }
 
         btn_initAddLiquidity_query.setOnClickListener {
-            val from =
-                ExampleApplication.session.approvedAccounts()?.first() ?: ""
+            val from = getFromAddress()
 
             val subscribe = EthUtils.getNonceFlowable(mWeb3jBean, from)
                 .subscribe({ nonce ->
@@ -231,6 +219,59 @@ class MainActivity : Activity(), Session.Callback {
 
     }
 
+    private fun getFromAddress(): String {
+        return ExampleApplication.session.approvedAccounts()?.first() ?: ""
+    }
+
+    private fun toSigin() {
+        if (ExampleApplication.session != null) {
+            val from = getFromAddress()
+
+            val signContent = edt_sign_content.text.toString()
+            val byteContent = signContent.toByteArray().toHexString()
+
+            val txRequest = ConstantAction.singAction
+            ExampleApplication.session.performMethodCall(
+                Session.MethodCall.SignMessage(
+                    1,
+                    from,
+                    byteContent
+                ),
+                ::handleResponse
+            )
+            this.txRequest = txRequest
+
+            //主动跳转至MetaMask
+            CommUtils.openApp(this, metaMaskPackName)
+        } else {
+            Toast.makeText(this, "请先建立连接", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun getNonceFromWC() {
+
+        val txRequest = System.currentTimeMillis()
+        val from = getFromAddress()
+
+        var ethMethodBean = RpcMethodUtils.getNonceBean(from)
+
+        ExampleApplication.session.performMethodCall(
+            Session.MethodCall.Custom(
+                txRequest,
+                ethMethodBean.method,
+                ethMethodBean.params
+            ), ::handleResponse
+        )
+        this.txRequest = txRequest
+
+    }
+
+    private fun toTest2() {
+
+        EthUtils.getGasPrice(mWeb3jBean)
+
+    }
+
 
     private fun toInitAddLiquidity(fromAddress: String, nonce: String) {
 
@@ -241,7 +282,7 @@ class MainActivity : Activity(), Session.Callback {
         LogUtils.e("encodedFunction:  $encodedFunction")
 
         toSessionSendTransaction(
-            System.currentTimeMillis(),
+            System.currentTimeMillis() / 1000,
             fromAddress,
             nonce,
             erc20Address,
@@ -459,6 +500,7 @@ class MainActivity : Activity(), Session.Callback {
                 }
             }
 
+            LogUtils.e("setTopApp")
             //这里应该主动把当前APP打开
             CommUtils.setTopApp(this)
         } else if (resp.id == txRequest) {
@@ -477,6 +519,7 @@ class MainActivity : Activity(), Session.Callback {
                 }
             }
 
+            LogUtils.e("setTopApp")
             //这里应该主动把当前APP打开
             CommUtils.setTopApp(this)
         }
