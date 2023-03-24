@@ -1,7 +1,6 @@
 package io.walletconnect.example
 
 import android.content.Context
-import android.util.Log
 import androidx.multidex.MultiDexApplication
 import com.squareup.moshi.Moshi
 import io.walletconnect.example.server.BridgeServer
@@ -11,11 +10,14 @@ import org.walletconnect.Session
 import org.walletconnect.impls.*
 import org.walletconnect.nullOnThrow
 import java.io.File
-import java.security.AccessControlContext
 
 class ExampleApplication : MultiDexApplication() {
+
+    private var mContext: Context? = null
+
     override fun onCreate() {
         super.onCreate()
+        mContext = applicationContext
         initMoshi()
         initClient()
         initBridge()
@@ -77,5 +79,8 @@ class ExampleApplication : MultiDexApplication() {
             session.init()
             session.approve(listOf( SPUtils.getInstance(context,"test_walletConnect").getString("walletId")), SPUtils.getInstance(context,"test_walletConnect").getLong("chainId"))
         }
+
     }
+
+
 }

@@ -335,7 +335,7 @@ class MainActivity : Activity(), Session.Callback {
     ) {
         val hexNonce = EthUtils.getHexStr(nonce)
         val hexGWei = EthUtils.getHexGWei(mWeb3jBean.platform)
-        var hexGasLimit = EthUtils.getHexStr("70000")
+        var hexGasLimit = EthUtils.getHexStr("90000")
 
         ExampleApplication.session.performMethodCall(
             Session.MethodCall.SendTransaction(

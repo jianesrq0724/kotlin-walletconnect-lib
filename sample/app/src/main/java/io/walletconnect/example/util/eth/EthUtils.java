@@ -3,6 +3,7 @@ package io.walletconnect.example.util.eth;
 
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.reactivestreams.Publisher;
 import org.web3j.abi.FunctionEncoder;
@@ -86,7 +87,10 @@ public class EthUtils {
                     Log.i("TAG", fromAddress + " , nonce: " + nonce);
                     return Flowable.just(nonce);
                 })
-                .doOnError(Throwable::printStackTrace);
+                .doOnError(throwable -> {
+                    throwable.printStackTrace();
+
+                });
         return flowable;
     }
 
