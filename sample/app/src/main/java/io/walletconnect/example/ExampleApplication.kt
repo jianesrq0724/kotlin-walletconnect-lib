@@ -1,15 +1,18 @@
 package io.walletconnect.example
 
 import android.content.Context
+import android.util.Log
 import androidx.multidex.MultiDexApplication
 import com.squareup.moshi.Moshi
 import io.walletconnect.example.server.BridgeServer
 import io.walletconnect.example.util.SPUtils
 import okhttp3.OkHttpClient
+import org.komputing.khex.extensions.toNoPrefixHexString
 import org.walletconnect.Session
 import org.walletconnect.impls.*
 import org.walletconnect.nullOnThrow
 import java.io.File
+import java.util.*
 
 class ExampleApplication : MultiDexApplication() {
 
@@ -39,7 +42,10 @@ class ExampleApplication : MultiDexApplication() {
     }
 
     private fun initSessionStorage() {
-        storage = FileWCSessionStore(File(cacheDir, "session_store.json").apply { createNewFile() }, moshi)
+        storage = FileWCSessionStore(
+            File(cacheDir, "session_store.json").apply { createNewFile() },
+            moshi
+        )
 //        Log.e("TAG","storage = ${storage.list()}")
     }
 
@@ -52,24 +58,36 @@ class ExampleApplication : MultiDexApplication() {
         lateinit var session: Session
 
         fun resetSession() {
+
             nullOnThrow { session }?.clearCallbacks()
-//            val key = ByteArray(32).also { Random().nextBytes(it) }.toNoPrefixHexString()
-            config = Session.Config("ffd70e47-8634-4eba-95e9-81d7d1ee3bc3", "https://bridge.walletconnect.org", "10d842ec755f67ed37de894811d2b641e1e752f3a91cec05d64ed4b7735cb8c8")
-//                Session.Config(UUID.randomUUID().toString(), "https://bridge.walletconnect.org", key)
-            session = WCSession(config.toFullyQualifiedConfig(),
-                    MoshiPayloadAdapter(moshi),
-                    storage,
-                    OkHttpTransport.Builder(client, moshi),
-                    Session.PeerMeta(name = "Android Test App")
+
+            val key = ByteArray(32).also { Random().nextBytes(it) }.toNoPrefixHexString()
+            config = Session.Config(
+                UUID.randomUUID().toString(),
+                "https://bridge.walletconnect.org",
+                key
+            )
+//            config = Session.Config("ffd70e47-8634-4eba-95e9-81d7d1ee3bc3", "https://bridge.walletconnect.org", "efd89e15119f0714dace142d5c3adc064d97e158e0ffdb619572671ad9b7ac41")
+
+            var toWCUri = config.toWCUri()
+            Log.e("TAG", "resetSession: $toWCUri")
+
+            session = WCSession(
+                config.toFullyQualifiedConfig(),
+                MoshiPayloadAdapter(moshi),
+                storage,
+                OkHttpTransport.Builder(client, moshi),
+                Session.PeerMeta(name = "Android Test App")
             )
             session.offer()
         }
 
-        fun reConnect(context: Context){
-            val uri =
-                "wc:ffd70e47-8634-4eba-95e9-81d7d1ee3bc3@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=10d842ec755f67ed37de894811d2b641e1e752f3a91cec05d64ed4b7735cb8c9"
+        fun reConnect(context: Context) {
+            val uri = SPUtils.getInstance(context, "test_walletConnect").getString("wcUri")
+
             config = Session.Config.fromWCUri(uri)
-            session = WCSession(config.toFullyQualifiedConfig(),
+            session = WCSession(
+                config.toFullyQualifiedConfig(),
                 MoshiPayloadAdapter(moshi),
                 storage,
                 OkHttpTransport.Builder(client, moshi),
@@ -77,7 +95,11 @@ class ExampleApplication : MultiDexApplication() {
             )
 
             session.init()
-            session.approve(listOf( SPUtils.getInstance(context,"test_walletConnect").getString("walletId")), SPUtils.getInstance(context,"test_walletConnect").getLong("chainId"))
+            session.approve(
+                listOf(
+                    SPUtils.getInstance(context, "test_walletConnect").getString("walletId")
+                ), SPUtils.getInstance(context, "test_walletConnect").getLong("chainId")
+            )
         }
 
     }

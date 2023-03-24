@@ -71,6 +71,9 @@ class MainActivity : Activity(), Session.Callback {
                 .put("walletId", ExampleApplication.session.approvedAccounts()?.first().toString())
             SPUtils.getInstance(applicationContext, "test_walletConnect")
                 .put("chainId", ExampleApplication.session.approvedChainId()!!)
+            SPUtils.getInstance(applicationContext, "test_walletConnect")
+                .put("wcUri", ExampleApplication.config.toWCUri())
+
 
             uiScope.launch {
                 screen_main_status.text = "Connected"
@@ -362,7 +365,14 @@ class MainActivity : Activity(), Session.Callback {
         tokenAddress: String,
         encodedFunction: String
     ) {
-        toSessionSendTransaction(txRequest, fromAddress, nonce, tokenAddress, "0", encodedFunction)
+        toSessionSendTransaction(
+            txRequest,
+            fromAddress,
+            nonce,
+            tokenAddress,
+            "0x0",
+            encodedFunction
+        )
     }
 
 
@@ -472,7 +482,6 @@ class MainActivity : Activity(), Session.Callback {
             Log.e("TAG", "重新连接")
             ExampleApplication.reConnect(applicationContext)
             ExampleApplication.session.addCallback(this)
-
             sessionApproved()
         } else {
             Log.e("TAG", "建立授权连接")
