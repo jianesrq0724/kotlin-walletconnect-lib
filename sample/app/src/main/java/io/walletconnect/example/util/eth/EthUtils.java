@@ -220,7 +220,7 @@ public class EthUtils {
                     balance = erc20HexBalanceDecimalPointToDouble(ethCall.getValue(), 18);
 
                     StringBuilder sb = new StringBuilder();
-                    sb.append(web3jBean.platform).append(", balance:").append(balance).append(" ").append(", tokenAddress:").append(tokenAddress);
+                    sb.append(web3jBean.platform).append(", ").append(ethCall.getResult()).append(", balance:").append(balance).append(" ").append(", tokenAddress:").append(tokenAddress);
                     LogUtils.i(sb.toString());
 
                     return Flowable.just(balance);

@@ -29,7 +29,7 @@ class MainActivity : Activity(), Session.Callback {
     private val uiScope = CoroutineScope(Dispatchers.Main)
 
 
-        private val mWeb3jBean: Web3jBean = EthUtils.mDiGiFTTestWeb3jBean
+    private val mWeb3jBean: Web3jBean = EthUtils.mDiGiFTTestWeb3jBean
 //    private val mWeb3jBean: Web3jBean = EthUtils.mHecoWeb3jBean
 
     override fun onStatus(status: Session.Status) {
@@ -256,7 +256,7 @@ class MainActivity : Activity(), Session.Callback {
         val txRequest = System.currentTimeMillis()
         val from = getFromAddress()
 
-        var ethMethodBean = RpcMethodUtils.getTokenNameBean()
+        var ethMethodBean = RpcMethodUtils.getTokenAmountABean(mWeb3jBean.mdexAddress)
 
         ExampleApplication.session.performMethodCall(
             Session.MethodCall.Custom(
